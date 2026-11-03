@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-4IjU0FmHjA3fgUdsdEROyq4G1BzbA2rNJnEKGGm6JgU=' 'sha256-FOoJXjX7+DvnqUE6VakF5Nx5DkTGNDHSMfB1Q0Wn6kA='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://ooiauesumnqcjlulpteb.supabase.co; connect-src https://ooiauesumnqcjlulpteb.supabase.co wss://ooiauesumnqcjlulpteb.supabase.co; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-4IjU0FmHjA3fgUdsdEROyq4G1BzbA2rNJnEKGGm6JgU=' 'sha256-rShXcVRCBbk/SX2iHi95b4bOpEkeZ82RTYeh6j8fnPU='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://ooiauesumnqcjlulpteb.supabase.co; connect-src https://ooiauesumnqcjlulpteb.supabase.co wss://ooiauesumnqcjlulpteb.supabase.co; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1D2A25">
@@ -120,6 +120,8 @@ tr.q td{background:var(--ok-soft)}
 .banner{background:var(--warn-soft);border-radius:8px;padding:8px 10px;font-size:13px}
 .rules li{margin-bottom:6px}
 .beta{font:700 11px var(--body);font-style:normal;letter-spacing:.08em;text-transform:uppercase;background:var(--accent);color:var(--accent-ink);border-radius:5px;padding:2px 6px;vertical-align:middle}
+#live{scroll-margin-top:calc(var(--hdrH,118px) + 8px)}
+@media (max-width:420px){#hdrBtns{gap:4px}#hdrBtns .btn{padding:5px 7px!important;font-size:11px!important}}
 a.pn{color:inherit;text-decoration:none;border-bottom:1px dotted var(--muted);cursor:pointer}
 a.pn:hover{color:var(--accent)}
 .kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px;margin-top:8px}
@@ -177,7 +179,7 @@ details.stx summary{cursor:pointer;font-weight:600;font-size:14px}
 <main class="wrap">
   <div class="row" style="justify-content:space-between;margin-bottom:10px">
     <span class="note" id="syncNote">Loading league…</span>
-    <span class="row"><a class="btn" href="https://discord.gg/Zhf9rNb7h" target="_blank" rel="noopener" style="padding:6px 10px;font-size:12px;text-decoration:none">Discord</a><button class="btn" id="refreshBtn" style="padding:6px 10px;font-size:12px">Refresh</button><button class="btn" id="reportBtn" style="padding:6px 10px;font-size:12px" title="Report a problem">Report</button><button class="btn" id="adminBtn" style="padding:6px 10px;font-size:12px">Admin</button></span>
+    <span class="row" id="hdrBtns"><a class="btn" href="https://discord.gg/Zhf9rNb7h" target="_blank" rel="noopener" style="padding:6px 10px;font-size:12px;text-decoration:none">Discord</a><button class="btn" id="refreshBtn" style="padding:6px 10px;font-size:12px">Refresh</button><button class="btn" id="reportBtn" style="padding:6px 10px;font-size:12px" title="Report a problem">Report</button><button class="btn" id="adminBtn" style="padding:6px 10px;font-size:12px">Admin</button></span>
   </div>
   <div class="card" id="reportBox" hidden style="margin-bottom:12px;border-color:var(--accent)">
     <h2>Report a problem</h2><p class="note" style="margin-top:-4px">This site is in beta. Tell the admins what went wrong or what's confusing. It records which page you were on.</p>
@@ -661,7 +663,7 @@ $("startBtn").onclick=()=>{liveMsg="";
   if(a===b){$("setupErr").textContent="Pick two different players.";return}
   if(pl(a).div!==pl(b).div){$("setupErr").textContent=`${a} is in Division ${pl(a).div} and ${b} is in Division ${pl(b).div}. League matches are within a division.`;return}
   S.match={a,b,first:$("selFirst").value,date:$("matchDate").value||today(),legs:[{starter:$("selFirst").value,visits:[],winner:null}],submitted:false};
-  typed="";dblSel=null;pendingCo=null;viewLeg=null;save();renderScorer();
+  typed="";dblSel=null;pendingCo=null;viewLeg=null;save();renderScorer();setTimeout(()=>{const l=$("live"),h=document.querySelector("header");if(h)document.documentElement.style.setProperty("--hdrH",h.getBoundingClientRect().height+"px");if(l&&!l.hidden)l.scrollIntoView({block:"start"})},60);
 };
 $("newBtn").onclick=()=>{if(isLive()&&!matchDone()&&$("newBtn").dataset.armed!=="1"){$("newBtn").dataset.armed="1";$("newBtn").textContent="Leave match?";return}
   $("newBtn").dataset.armed="";$("newBtn").textContent="New match";S.match=null;save();renderScorer()};
