@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-4IjU0FmHjA3fgUdsdEROyq4G1BzbA2rNJnEKGGm6JgU=' 'sha256-rShXcVRCBbk/SX2iHi95b4bOpEkeZ82RTYeh6j8fnPU='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://ooiauesumnqcjlulpteb.supabase.co; connect-src https://ooiauesumnqcjlulpteb.supabase.co wss://ooiauesumnqcjlulpteb.supabase.co; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-4IjU0FmHjA3fgUdsdEROyq4G1BzbA2rNJnEKGGm6JgU=' 'sha256-fYHD8CWC72PcvhYq2+6JqLXqf+Ecpe7ZJB1TbHP4x1Q=' https://cdn.jsdelivr.net 'wasm-unsafe-eval'; worker-src blob: https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://ooiauesumnqcjlulpteb.supabase.co; connect-src https://ooiauesumnqcjlulpteb.supabase.co wss://ooiauesumnqcjlulpteb.supabase.co https://cdn.jsdelivr.net; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1D2A25">
@@ -46,6 +46,8 @@ img{max-width:100%}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--head)}
+.vstage{position:relative;background:#000;border-radius:10px;overflow:hidden;aspect-ratio:4/3}.vstage video,.vstage canvas{width:100%;height:100%;object-fit:cover;display:block}.vlabel{position:absolute;left:8px;bottom:8px;background:rgba(0,0,0,.55);color:#fff;font-size:12px;padding:3px 8px;border-radius:99px}.frame .ring{position:absolute;inset:6% 18%;border:3px dashed rgba(255,255,255,.85);border-radius:50%;pointer-events:none}.frame #camPrev{width:100%;height:100%}.camb{padding:6px 10px;font-size:14px;filter:grayscale(1);opacity:.75}.camb.live{background:#1E9E55;border-color:#1E9E55;filter:none;opacity:1}#vidBox,#camSetup{margin-bottom:12px}#vidBox,#inputArea{scroll-margin-top:90px}.route{font-weight:700;color:var(--accent);font-size:15px;margin:2px 0}.lastsc{font-size:13px;color:var(--muted);margin-top:2px}.dpad{display:grid;gap:8px;margin:8px 0}.dmods,.dacts{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.dacts{grid-template-columns:1fr 2fr}.dnums{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.dpad button{font:700 18px var(--display);padding:10px 0;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}.dpad .dmods button{font-size:14px}.dpad button[aria-pressed=true]{background:var(--accent);color:#fff;border-color:var(--accent)}.dpad .miss{background:var(--sunk)}.dpad .go{background:var(--accent);color:#fff;border-color:var(--accent)}.dpad button:disabled{opacity:.35}.ttpop{position:fixed;inset:0;background:rgba(0,0,0,.55);display:grid;place-items:center;z-index:50;padding:16px}.ttpop[hidden]{display:none}.ttpop .card{max-width:340px;text-align:center}#ttClock.late{background:#C0392B;color:#fff;border-color:#C0392B}@media(min-width:1000px){body:has(#live.withvid:not([hidden])) .wrap{max-width:1240px}#live.withvid{display:grid;grid-template-columns:1.5fr 1fr;gap:14px;align-items:start}#live.withvid>*{grid-column:1}#live.withvid>#vidBox{grid-column:2;grid-row:1/span 8;position:sticky;top:12px}#live.withvid>#camSetup{grid-column:2;grid-row:1/span 8}}
+.ocrbox{margin-top:8px;display:grid;gap:6px}
 .wrap{max-width:720px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 40px}
 header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--head);color:var(--head-ink)}
 header.top .in{max-width:720px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px 0}
@@ -1238,6 +1240,398 @@ loadT();
 if(CODE&&PCODE&&!ME)whoAmI(PCODE,true).then(d=>{if(d){renderCode();renderAll()}});
 show("home");
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&loadedOnce)loadData()});
+
+/* ===== v1x: video, voice, caller, timer, checkout routes, darts keypad, edit score ===== */
+// ===================== live video, voice and caller (online matches) =====================
+const VQ={low:{w:480,h:360,br:350000,fps:20,n:"Low"},med:{w:640,h:480,br:700000,fps:24,n:"Medium"},hd:{w:1280,h:720,br:2000000,fps:30,n:"HD (Wi-Fi)"}};
+let V={match:null,side:null,ch:null,pc:null,ice:null,raw:null,canvas:null,out:null,raf:0,zoom:1,q:"med",live:false,setup:false,mic:false,muted:false,remote:null,pending:[],status:"",turn:false};
+const isWide=()=>window.matchMedia("(min-width: 768px)").matches;
+function vidEl(){let b=$("vidBox");if(!b){b=document.createElement("div");b.id="vidBox";b.className="card";b.hidden=true;
+  b.innerHTML=`<div class="vstage"><video id="vRemote" playsinline autoplay></video><video id="vSelf" playsinline autoplay muted></video><div class="vlabel" id="vLabel"></div></div><div class="row" style="margin-top:8px;justify-content:space-between"><span class="note" id="vStatus"></span><span class="row"><button class="btn" id="vMute" style="padding:6px 10px;font-size:12px">Mute</button><button class="btn" id="vHd" style="padding:6px 10px;font-size:12px">HD</button><button class="btn" id="vFlip" style="padding:6px 10px;font-size:12px">🔄</button><button class="btn" id="vStop" style="padding:6px 10px;font-size:12px">Camera off</button></span></div>`;
+  $("live").insertBefore(b,$("live").firstChild);$("vMute").onclick=toggleMute;$("vHd").onclick=()=>setQuality(V.q==="hd"?"med":"hd");$("vStop").onclick=()=>stopCamera(true);$("vFlip").onclick=switchCam}return b}
+
+// ---------- camera set-up: permission, zoom, confirm ----------
+async function cameraButton(){if(V.live||V.setup){V.setup=true;renderCamSetup();return}
+  V.setup=true;renderCamSetup();V.status="Asking for permission…";renderCamSetup();
+  try{const vc=f=>({facingMode:f,width:{ideal:VQ[V.q].w},height:{ideal:VQ[V.q].h}});try{V.raw=await navigator.mediaDevices.getUserMedia({video:vc({exact:"environment"}),audio:true})}catch(_){V.raw=await navigator.mediaDevices.getUserMedia({video:vc({ideal:"environment"}),audio:true})}V.mic=true}
+  catch(e){try{V.raw=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}},audio:false});V.mic=false}catch(e2){V.setup=false;V.status="";alert("Camera permission was refused or no camera was found. You can still score without video.");renderScorer();return}}
+  startCanvas();V.status="";renderCamSetup()}
+function startCanvas(){const q=VQ[V.q];V.canvas=V.canvas||document.createElement("canvas");V.canvas.width=q.w;V.canvas.height=q.h;const ctx=V.canvas.getContext("2d");
+  const vid=document.createElement("video");vid.muted=true;vid.playsInline=true;vid.srcObject=V.raw;vid.play().catch(()=>{});V.rawVid=vid;
+  cancelAnimationFrame(V.raf);const draw=()=>{const vw=vid.videoWidth,vh=vid.videoHeight;if(vw){const z=V.zoom,cw=V.canvas.width,ch=V.canvas.height,ar=cw/ch;
+      let sw=vw/z,sh=sw/ar;if(sh>vh/z){sh=vh/z;sw=sh*ar}ctx.drawImage(vid,(vw-sw)/2,(vh-sh)/2,sw,sh,0,0,cw,ch)}V.raf=requestAnimationFrame(draw)};draw();
+  if(!V.out){V.out=V.canvas.captureStream(q.fps)}}
+function renderCamSetup(){let o=$("camSetup");if(!o){o=document.createElement("div");o.id="camSetup";o.className="card";$("live").insertBefore(o,$("live").firstChild)}
+  o.hidden=!V.setup;if(!V.setup)return;
+  o.innerHTML=`<h2>Set up your camera</h2><p class="note">Point the camera at your board. Zoom until the whole board fits inside the circle, then confirm.${typeof DEPLOYMENT!=="undefined"&&DEPLOYMENT==="v1"?" Make sure nothing sensitive is in the background.":""}</p>
+   <div class="vstage frame"><div id="camPrev"></div><div class="ring"></div></div>
+   <label class="f" style="margin-top:8px">Zoom <input id="camZoom" type="range" min="1" max="3" step="0.05" value="${V.zoom}"></label>
+   <div class="row" style="margin-top:6px"><label class="f">Quality<select id="camQ">${Object.entries(VQ).map(([k,q])=>`<option value="${k}" ${k===V.q?"selected":""}>${q.n}</option>`).join("")}</select></label></div>
+   <p class="note">${V.mic?"🎤 Microphone allowed. You can mute at any time.":"🎤 Microphone not allowed: video only."} ${V.status}</p>
+   <div class="row"><button class="btn primary" id="camGo" ${V.raw?"":"disabled"}>${V.live?"Done":"Confirm and go live"}</button><button class="btn" id="camFlip">🔄 Switch camera</button><button class="btn" id="camCancel">Cancel</button></div>`;
+  if(V.canvas){V.canvas.className="prev";$("camPrev").appendChild(V.canvas)}
+  $("camZoom").oninput=e=>{V.zoom=+e.target.value};$("camQ").onchange=e=>setQuality(e.target.value);
+  $("camGo").onclick=()=>{V.setup=false;goLive();renderCamSetup();renderScorer()};$("camFlip").onclick=switchCam;$("camCancel").onclick=()=>{V.setup=false;if(!V.live)stopCamera(false);renderCamSetup();renderScorer()}}
+async function setQuality(k){V.q=k;const q=VQ[k];if(V.canvas){V.canvas.width=q.w;V.canvas.height=q.h}
+  const t=V.raw&&V.raw.getVideoTracks()[0];if(t)try{await t.applyConstraints({width:{ideal:q.w},height:{ideal:q.h}})}catch(_){}
+  applyBitrate();const b=$("vHd");if(b)b.textContent=k==="hd"?"Normal":"HD"}
+function stopCamera(rerender){cancelAnimationFrame(V.raf);if(V.raw)V.raw.getTracks().forEach(t=>t.stop());if(V.out)V.out.getTracks().forEach(t=>t.stop());V.raw=null;V.out=null;V.canvas=null;V.live=false;V.setup=false;
+  if(V.pc)V.pc.getTransceivers().forEach(t=>{try{t.sender.replaceTrack(null)}catch(_){}});if(rerender)renderScorer()}
+function toggleMute(){V.muted=!V.muted;if(V.raw)V.raw.getAudioTracks().forEach(t=>t.enabled=!V.muted);$("vMute").textContent=V.muted?"Unmute":"Mute"}
+
+// ---------- connection: Supabase Realtime for signalling, WebRTC for media ----------
+// Side A always makes the offer. Every message carries this device's session id (sid) and the offer id (oid),
+// so stale or duplicate messages from an earlier attempt are ignored instead of crossing wires.
+let SIGQ=Promise.resolve();
+async function videoJoin(m,side){if(V.match===m.id)return;videoLeave();V.match=m.id;V.side=side;V.sid=Math.random().toString(36).slice(2,10);V.peer=null;V.oid=0;V.offerAt=0;
+  try{const r=await db.functions.invoke("turn",{body:{}});V.ice=(r.data&&r.data.iceServers)||[{urls:"stun:stun.l.google.com:19302"}]}catch(_){V.ice=[{urls:"stun:stun.l.google.com:19302"}]}
+  if(V.match!==m.id)return;
+  V.ch=db.channel("match-"+m.id,{config:{broadcast:{self:false}}});
+  V.ch.on("broadcast",{event:"sig"},({payload})=>{SIGQ=SIGQ.then(()=>onSig(payload)).catch(()=>{})}).on("broadcast",{event:"state"},()=>pollLive());
+  V.ch.subscribe(st=>{if(st==="SUBSCRIBED")send({t:"hello"})});
+  clearInterval(V.dog);V.dog=setInterval(watchdog,6000)}
+function connected(){return V.pc&&V.pc.connectionState==="connected"}
+function watchdog(){if(!V.ch||connected())return;
+  if(V.side==="B")send({t:"hello"});
+  else if(V.peer&&Date.now()-V.offerAt>10000)SIGQ=SIGQ.then(makeOffer).catch(()=>{})}
+function videoLeave(){clearInterval(V.dog);if(V.ch){try{db.removeChannel(V.ch)}catch(_){}}V.ch=null;if(V.pc){try{V.pc.close()}catch(_){}}V.pc=null;V.remote=null;V.match=null;V.peer=null;stopCamera(false);const b=$("vidBox");if(b)b.hidden=true}
+function send(p){if(V.ch)V.ch.send({type:"broadcast",event:"sig",payload:{...p,from:V.side,sid:V.sid,oid:p.oid??V.oid}})}
+function newPC(){if(V.pc){try{V.pc.close()}catch(_){}}const pc=new RTCPeerConnection({iceServers:V.ice});V.pc=pc;V.pending=[];V.remote=new MediaStream();
+  pc.ontrack=e=>{if(V.pc!==pc)return;V.remote.addTrack(e.track);const rv=$("vRemote");if(rv){rv.srcObject=V.remote;rv.play().catch(()=>{})}vidUpdate()};
+  pc.onicecandidate=e=>{if(e.candidate&&V.pc===pc)send({t:"ice",c:e.candidate.toJSON?e.candidate.toJSON():e.candidate})};
+  pc.onconnectionstatechange=()=>{if(V.pc!==pc)return;const s=pc.connectionState;V.status=s==="connected"?"Video connected":s==="failed"?"Video dropped. Reconnecting…":s==="connecting"||s==="new"?"Connecting video…":s==="disconnected"?"Connection wobbling…":"";vidUpdate()};
+  return pc}
+async function attachLocal(){if(!V.pc)return;const tr=V.pc.getTransceivers();const vT=V.out&&V.out.getVideoTracks()[0],aT=V.raw&&V.mic?V.raw.getAudioTracks()[0]:null;
+  for(const t of tr){const kind=t.receiver.track&&t.receiver.track.kind;try{if(kind==="video")await t.sender.replaceTrack(V.live?vT:null);if(kind==="audio")await t.sender.replaceTrack(V.live?aT:null)}catch(_){}}applyBitrate()}
+async function applyBitrate(){if(!V.pc)return;for(const s of V.pc.getSenders()){if(!s.track||s.track.kind!=="video")continue;try{const p=s.getParameters();p.encodings=p.encodings&&p.encodings.length?p.encodings:[{}];p.encodings[0].maxBitrate=VQ[V.q].br;await s.setParameters(p)}catch(_){}}}
+async function makeOffer(){if(V.side!=="A"||!V.ch)return;V.oid=Date.now();V.offerAt=Date.now();const pc=newPC();pc.addTransceiver("video",{direction:"sendrecv"});pc.addTransceiver("audio",{direction:"sendrecv"});await attachLocal();
+  const o=await pc.createOffer();if(V.pc!==pc)return;await pc.setLocalDescription(o);send({t:"offer",sdp:{type:pc.localDescription.type,sdp:pc.localDescription.sdp}})}
+async function onSig(p){if(!p||p.from===V.side||p.sid===V.sid)return;
+  if(p.t==="hello"){
+    if(V.side==="A"){const busy=V.peer===p.sid&&V.pc&&(connected()||Date.now()-V.offerAt<8000);if(busy)return;V.peer=p.sid;await makeOffer()}
+    else if(!(V.peer===p.sid&&connected()))send({t:"hello"});
+    return}
+  if(p.t==="offer"&&V.side==="B"){V.peer=p.sid;V.oid=p.oid;const pc=newPC();await pc.setRemoteDescription(p.sdp);pc.getTransceivers().forEach(t=>{try{t.direction="sendrecv"}catch(_){}});await attachLocal();
+    const a=await pc.createAnswer();if(V.pc!==pc)return;await pc.setLocalDescription(a);send({t:"answer",sdp:{type:pc.localDescription.type,sdp:pc.localDescription.sdp}});
+    for(const c of V.pending)try{await pc.addIceCandidate(c)}catch(_){}V.pending=[];return}
+  if(p.t==="answer"&&V.side==="A"){if(!V.pc||p.oid!==V.oid||V.pc.signalingState!=="have-local-offer")return;await V.pc.setRemoteDescription(p.sdp);
+    for(const c of V.pending)try{await V.pc.addIceCandidate(c)}catch(_){}V.pending=[];return}
+  if(p.t==="ice"){if(p.oid!==V.oid)return;if(V.pc&&V.pc.remoteDescription)try{await V.pc.addIceCandidate(p.c)}catch(_){}else V.pending.push(p.c)}}
+async function goLive(){V.live=true;const sv=$("vSelf");if(sv){sv.srcObject=V.out;sv.play().catch(()=>{})}if(V.pc)await attachLocal();else if(V.side==="B")send({t:"hello"});else if(V.peer)SIGQ=SIGQ.then(makeOffer).catch(()=>{});vidUpdate()}
+function nudge(){if(V.ch)V.ch.send({type:"broadcast",event:"state",payload:{}})}
+// front/back camera
+async function switchCam(){if(!V.raw)return;try{const devs=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==="videoinput");
+  const cur=V.raw.getVideoTracks()[0],set=cur?cur.getSettings():{};let c;
+  if(devs.length>1&&devs.every(d=>d.deviceId)){const i=devs.findIndex(d=>d.deviceId===set.deviceId);c={deviceId:{exact:devs[(i+1)%devs.length].deviceId}}}
+  else c={facingMode:{exact:set.facingMode==="user"?"environment":"user"}};
+  if(cur)cur.stop();const s=await navigator.mediaDevices.getUserMedia({video:{...c,width:{ideal:VQ[V.q].w},height:{ideal:VQ[V.q].h}}});const nt=s.getVideoTracks()[0];
+  if(cur)V.raw.removeTrack(cur);V.raw.addTrack(nt);V.rawVid.srcObject=new MediaStream([nt]);V.rawVid.play().catch(()=>{})}
+  catch(e){alert("Couldn't switch camera on this phone.")}}
+
+// ---------- who's on screen ----------
+function vidUpdate(){const box=vidEl();const on=SC&&SC.mode==="online"&&(V.live||(V.remote&&V.remote.getTracks().length));box.hidden=!on;if(!on)return;
+  const myTurn=V.turn;const rv=$("vRemote"),sv=$("vSelf");
+  if(sv&&V.out&&sv.srcObject!==V.out){sv.srcObject=V.out;sv.play().catch(()=>{})}
+  if(rv&&V.remote&&rv.srcObject!==V.remote){rv.srcObject=V.remote;rv.play().catch(()=>{})}
+  const showSelf=myTurn&&V.live;rv.hidden=showSelf;sv.hidden=!showSelf;
+  $("vLabel").textContent=showSelf?"You (your opponent sees this)":(V.remote&&V.remote.getVideoTracks().length?"Your opponent":"Waiting for your opponent's camera…");
+  $("vStatus").textContent=V.status;$("vMute").hidden=!V.mic;$("vHd").textContent=V.q==="hd"?"Normal":"HD";$("vStop").hidden=!V.live;$("vFlip").hidden=!V.live}
+
+
+let CALLER=true;try{CALLER=localStorage.getItem("11d-caller")!=="0"}catch(_){}
+const ONES=["","one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen"],TENS=["","","twenty","thirty","forty","fifty","sixty","seventy","eighty","ninety"];
+function words(n){if(n===0)return "no score";if(n<20)return ONES[n];if(n<100)return TENS[Math.floor(n/10)]+(n%10?"-"+ONES[n%10]:"");return ONES[Math.floor(n/100)]+" hundred"+(n%100?" and "+words(n%100):"")}
+function say(t){if(!CALLER||!("speechSynthesis" in window))return;try{const u=new SpeechSynthesisUtterance(t);u.lang="en-GB";u.rate=0.95;u.pitch=0.9;const v=speechSynthesis.getVoices().find(v=>/en-GB/i.test(v.lang));if(v)u.voice=v;speechSynthesis.speak(u)}catch(_){}}
+
+// ===================== checkout routes + darts keyboard =====================
+// every dart on the board, with a preference cost (lower = more natural)
+const DARTS=(()=>{const a=[];const ord=[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1];
+  ord.forEach((n,i)=>a.push({l:"T"+n,v:3*n,c:[0,2,4,6,8,10,14,18,24,30,36][i]??(50+i),dbl:false}));
+  a.push({l:"25",v:25,c:22,dbl:false});
+  ord.forEach((n,i)=>a.push({l:String(n),v:n,c:12+i,dbl:false}));
+  const fin=[20,16,18,12,10,8,19,17,14,15,13,11,9,7,6,5,4,3,2,1];
+  fin.forEach((n,i)=>a.push({l:"D"+n,v:2*n,c:60+i,dbl:true,f:i}));
+  a.push({l:"Bull",v:50,c:70,dbl:true,f:7});return a})();
+const FINS=DARTS.filter(d=>d.dbl);
+const ROUTES={};
+function bestRoute(s,n){const k=s+":"+n;if(k in ROUTES)return ROUTES[k];let best=null,bc=1e9;
+  const cost=(arr)=>arr.length*1000+arr[arr.length-1].f*5+arr.slice(0,-1).reduce((t,d)=>t+d.c,0);
+  for(const f of FINS){if(f.v===s){const c=cost([f]);if(c<bc){bc=c;best=[f]}}}
+  if(n>=2)for(const a of DARTS)for(const f of FINS){if(a.v+f.v===s){const c=cost([a,f]);if(c<bc){bc=c;best=[a,f]}}}
+  if(n>=3&&!best)for(const a of DARTS)for(const b of DARTS)for(const f of FINS){if(a.v+b.v+f.v===s){const c=cost([a,b,f]);if(c<bc){bc=c;best=[a,b,f]}}}
+  return ROUTES[k]=best?best.map(d=>d.l).join(" "):null}
+let DPAD="total";try{DPAD=localStorage.getItem("11d-pad")||"total"}catch(_){}
+const dVal=d=>d.m==="M"?0:d.n===25?(d.m==="D"?50:25):d.n*({S:1,D:2,T:3}[d.m]);
+const dLab=d=>d.m==="M"?"Miss":d.n===25?(d.m==="D"?"Bull":"25"):d.m+d.n;
+function dState(){if(!SC)return null;const st=SC.st,L=st.legs[st.legs.length-1],key=st.legs.length+":"+L.visits.length;
+  if(SC.dkey!==key){SC.dkey=key;SC.darts=[];SC.dmod="S"}return SC.darts}
+
+
+// ===================== v1 glue: video, caller, timer, routes, darts keypad, edit, last score =====================
+var SC=null;const DEPLOYMENT="v1";
+function v1SC(){const m=M();if(!m){SC=null;return}const L=curLeg();
+  SC={mode:isLive()?"online":"local",m:{id:isLive()?"v1-"+m.live.code:"v1-local"},side:isLive()?me():null,st:{done:matchDone(),legs:m.legs}};
+  V.turn=!isLive()||turn()===me()}
+function pollLive(){pullLive(true)}
+const _pushLiveX=pushLive;pushLive=async function(){await _pushLiveX();nudge()};
+
+// ---------- toolbar: caller, camera, darts keypad ----------
+function v1Tools(){let t=$("v1tools");if(!t){t=document.createElement("div");t.id="v1tools";t.className="row";t.style.cssText="justify-content:flex-end;gap:6px;margin-bottom:8px";
+    const card=$("live").querySelector(".card");card.insertBefore(t,card.firstChild)}
+  t.innerHTML=`<span class="pill" id="ttClock" hidden></span><button class="btn" id="callBtn" style="padding:6px 10px;font-size:12px">${CALLER?"🔊 Caller":"🔇 Caller"}</button><button class="btn" id="dTog" style="padding:6px 10px;font-size:12px">${DPAD==="darts"?"🔢 Total":"🎯 Darts"}</button>${isLive()?`<button class="btn camb ${V.live?"live":""}" id="camBtn" title="Camera">📷</button>`:""}`;
+  $("callBtn").onclick=()=>{CALLER=!CALLER;try{localStorage.setItem("11d-caller",CALLER?"1":"0")}catch(_){}if(CALLER)say("Caller on");renderScorer()};
+  $("dTog").onclick=()=>{DPAD=DPAD==="darts"?"total":"darts";try{localStorage.setItem("11d-pad",DPAD)}catch(_){}typed="";renderScorer()};
+  const cb=$("camBtn");if(cb)cb.onclick=cameraButton}
+
+// ---------- last score + checkout routes under each player's score ----------
+function lastOfV1(p){const legs=M().legs;for(let i=legs.length-1;i>=0;i--){const vs=legs[i].visits.filter(v=>v.p===p);if(vs.length){const v=vs[vs.length-1];return v.bust?"bust":v.score+(v.co?" ✓":"")}}return "–"}
+let DARTS1=[],DMOD="S",DKEY="";
+function v1Routes(){const L=curLeg(),done=matchDone(),t=turn();
+  ["A","B"].forEach(p=>{const card=$("pc"+p);let ls=card.querySelector(".lastsc");if(!ls){ls=document.createElement("div");ls.className="lastsc";card.appendChild(ls)}ls.innerHTML="Last: <b>"+esc(lastOfV1(p))+"</b>";
+    let r=card.querySelector(".route");if(!r){r=document.createElement("div");r.className="route";$("rem"+p).after(r)}
+    let rem=leftOf(p,L),left=3;if(p===t&&DARTS1.length){rem-=DARTS1.reduce((s,d)=>s+dVal(d),0);left=3-DARTS1.length}
+    const rt=!done&&rem>1&&rem<=170?bestRoute(rem,left):null;r.textContent=rt?"🎯 "+rt:(!done&&p===t&&rem>1&&rem<=170?"No checkout":"");r.hidden=!r.textContent})}
+
+// ---------- darts keypad ----------
+function v1Darts(){const L=curLeg(),key=M().legs.length+":"+L.visits.length;if(key!==DKEY){DKEY=key;DARTS1=[];DMOD="S"}
+  let dp=$("dpad1");const on=DPAD==="darts";$("pad").hidden=on;$("dblChips").hidden=on;if($("quick"))$("quick").hidden=on;
+  if(!on){if(dp)dp.hidden=true;return}
+  if(!dp){dp=document.createElement("div");dp.id="dpad1";dp.className="dpad";$("pad").after(dp)}dp.hidden=false;
+  const total=DARTS1.reduce((s,d)=>s+dVal(d),0);
+  if(!EDIT)$("entry").innerHTML=DARTS1.length?`${DARTS1.map(d=>esc(dLab(d))).join(" + ")} = <b>${total}</b>`:'<span class="ph">Tap each dart</span>';
+  dp.innerHTML=`<div class="dmods">${["S","D","T"].map(m=>`<button data-dm="${m}" aria-pressed="${DMOD===m}">${{S:"Single",D:"Double",T:"Treble"}[m]}</button>`).join("")}</div>
+    <div class="dnums">${Array.from({length:20},(_,i)=>`<button data-dn="${i+1}">${i+1}</button>`).join("")}<button data-dn="25" ${DMOD==="T"?"disabled":""}>${DMOD==="D"?"Bull":"25"}</button><button data-dn="0" class="miss">Miss</button></div>
+    <div class="dacts"><button data-da="back">⌫ Dart</button><button class="go" data-da="ok">Enter${DARTS1.length?" "+total:""}</button></div>`;
+  dp.querySelectorAll("[data-dm]").forEach(b=>b.onclick=()=>{DMOD=b.dataset.dm;renderScorer()});
+  dp.querySelectorAll("[data-dn]").forEach(b=>b.onclick=()=>{if(DARTS1.length>=3)return;const n=+b.dataset.dn;DARTS1.push(n===0?{m:"M",n:0}:{m:DMOD,n});DMOD="S";$("scoreErr").textContent="";renderScorer()});
+  dp.querySelector('[data-da="back"]').onclick=()=>{DARTS1.pop();renderScorer()};
+  dp.querySelector('[data-da="ok"]').onclick=v1DartsEnter}
+function v1DartsEnter(){if(!DARTS1.length){$("scoreErr").textContent="Tap at least one dart (use Miss for a miss).";return}
+  const total=DARTS1.reduce((s,d)=>s+dVal(d),0),n=DARTS1.length,dbls=DARTS1.filter(d=>d.m==="D").length,last=DARTS1[n-1];
+  if(EDIT){typed=String(total);DARTS1=[];return enter()}
+  const p=turn(),L=curLeg(),prev=leftOf(p,L);
+  if(prev-total===0&&last.m!=="D"){L.visits.push({p,score:total,pts:0,left:prev,bust:true,dbl:dbls,darts:3,co:false});DARTS1=[];typed="";save();renderScorer();if(isLive())pushLive();$("scoreErr").textContent="Bust: the last dart must be a double.";return}
+  dblSel=dbls||null;typed=String(total);DARTS1=[];enter();
+  if(pendingCo){dblSel=Math.max(1,dbls);finishCo(n)}}
+
+// ---------- edit last score (only until your opponent scores) ----------
+let EDIT=false;
+function editTargetV1(){const L=curLeg(),v=L.visits[L.visits.length-1];if(!v||v.co||M().submitted)return null;return (!isLive()||v.p===me())?v:null}
+const _enterX=enter;enter=function(){if(!EDIT)return _enterX();const v=editTargetV1();EDIT=false;if(!v){typed="";renderScorer();return}
+  if(typed===""){EDIT=true;$("scoreErr").textContent="Type the corrected score.";return}
+  const s=+typed;typed="";if(s>180||IMPOSSIBLE.includes(s)){$("scoreErr").textContent=`${s} can't be scored with 3 darts.`;renderScorer();return}
+  const prev=v.left+(v.bust?0:v.pts);if(prev-s<=1){$("scoreErr").textContent="That would finish or bust the leg. Use Undo instead.";renderScorer();return}
+  Object.assign(v,{score:s,pts:s,left:prev-s,bust:false});save();renderScorer();if(isLive())pushLive();$("scoreErr").textContent="Score changed."};
+
+document.addEventListener("keydown",e=>{if(!EDIT||!M()||$("v-scorer").hidden||!isLive()||turn()===me())return;if(e.target.tagName==="INPUT"||e.target.tagName==="SELECT")return;
+  if(/^[0-9]$/.test(e.key))key(e.key);else if(e.key==="Backspace")key("⌫");else if(e.key==="Enter"){e.preventDefault();key("Enter")}else if(e.key==="Escape"){EDIT=false;typed="";renderScorer()}});
+function v1Edit(){let b=$("editBtn");const ok=!!editTargetV1()&&!matchDone();
+  if(!b){b=document.createElement("button");b.className="btn";b.id="editBtn";$("undoBtn").after(b);b.onclick=()=>{EDIT=!EDIT;typed="";DARTS1=[];b.blur();renderScorer()}}
+  if(!ok)EDIT=false;b.hidden=!ok;b.textContent=EDIT?"Cancel edit":"Edit score";
+  if(EDIT){$("inputArea").hidden=false;$("waitArea").hidden=true;const v=editTargetV1();if(!DARTS1.length)$("entry").innerHTML=`<span class="ph">New score for the last visit (was ${v?v.score:"–"})</span>${typed?" "+esc(typed):""}`}}
+
+// ---------- caller ----------
+let SAID1=null;
+function v1Call(){const m=M();let L=curLeg(),last=L.visits[L.visits.length-1],legNo=m.legs.length;
+  if(!last&&m.legs.length>1){L=m.legs[m.legs.length-2];last=L.visits[L.visits.length-1];legNo--}
+  const key=(m.live?m.live.code:"l")+":"+legNo+":"+(last?L.visits.length:0);if(SAID1===null){SAID1=key;return}if(!last||key===SAID1)return;SAID1=key;
+  let t=last.bust?"no score":last.co?(matchDone()?"game shot, and the match!":"game shot, and the leg!"):(last.score===180?"one hundred and eighty!":words(last.score));
+  if(!matchDone()&&!last.co){const nx=turn(),r=leftOf(nx,curLeg());if(r<=170&&!BOGEY.includes(r))t+=". "+(nx==="A"?m.a:m.b)+", you require "+words(r)}
+  say(t)}
+
+// ---------- 60-second throw timer ----------
+const TT={key:null,start:0,warned:false};
+function beep(){try{const A=window.AudioContext||window.webkitAudioContext;const a=new A();[0,0.35].forEach(t=>{const o=a.createOscillator(),g=a.createGain();o.frequency.value=880;g.gain.value=0.25;o.connect(g);g.connect(a.destination);o.start(a.currentTime+t);o.stop(a.currentTime+t+0.25)});setTimeout(()=>a.close(),1200)}catch(_){}try{navigator.vibrate&&navigator.vibrate([300,150,300])}catch(_){}}
+function turnWarn(){let o=$("ttPop");if(!o){o=document.createElement("div");o.id="ttPop";o.className="ttpop";document.body.appendChild(o)}
+  o.innerHTML=`<div class="card"><h2>⏱ 60 seconds are up</h2><p>Throw your darts and enter your score.</p><button class="btn primary" id="ttOk">OK</button></div>`;o.hidden=false;$("ttOk").onclick=()=>{o.hidden=true};beep()}
+function turnTimerTick(){const c=$("ttClock");const m=M();if(!c)return;if(!m||matchDone()||$("v-scorer").hidden||pendingCo){c.hidden=true;return}
+  const L=curLeg(),p=turn(),mine=!isLive()||p===me(),key=m.legs.length+":"+L.visits.length+":"+p;
+  if(key!==TT.key){TT.key=key;TT.start=Date.now();TT.warned=false;const pop=$("ttPop");if(pop)pop.hidden=true}
+  if(!mine){c.hidden=true;return}const left=Math.max(0,60-Math.floor((Date.now()-TT.start)/1000));c.hidden=false;c.textContent="⏱ "+left+"s";c.classList.toggle("late",left<=10);
+  if(left===0&&!TT.warned){TT.warned=true;turnWarn()}}
+setInterval(turnTimerTick,1000);
+
+// ---------- phone flip + laptop side-by-side ----------
+const _vidUpdateV1=vidUpdate;vidUpdate=function(){_vidUpdateV1();const vb=$("vidBox");if(vb&&SC&&SC.mode==="online"&&!isWide()&&V.turn)vb.hidden=true;
+  const lv=$("live");if(lv)lv.classList.toggle("withvid",!!(vb&&!vb.hidden)||!!($("camSetup")&&!$("camSetup").hidden))};
+
+// ---------- hook into v1's scorer ----------
+const _renderScorerV1=renderScorer;
+renderScorer=function(){_renderScorerV1();const m=M();if(!m){if(V.match)videoLeave();return}v1SC();
+  if(isLive()&&V.match!=="v1-"+m.live.code)videoJoin({id:"v1-"+m.live.code},me());if(!isLive()&&V.match)videoLeave();
+  v1Tools();v1Routes();v1Darts();v1Edit();
+  if(isLive()&&!isWide()&&V.live){const tgt=V.turn?$("inputArea"):$("vidBox");if(V.lastTurn!==V.turn&&tgt){V.lastTurn=V.turn;setTimeout(()=>tgt.scrollIntoView({behavior:"smooth",block:"start"}),60)}}
+  vidUpdate();v1Call();turnTimerTick()};
+
+
+// ===================== "Take a photo" next to every photo upload =====================
+function camInputs(){document.querySelectorAll('input[type=file]:not([data-cam])').forEach(inp=>{if(inp.accept&&!/image/.test(inp.accept))return;inp.dataset.cam="1";
+  const cap=document.createElement("input");cap.type="file";cap.accept="image/*";cap.setAttribute("capture","environment");cap.hidden=true;cap.dataset.cam="1";
+  const b=document.createElement("button");b.type="button";b.className="btn";b.textContent="📷 Take a photo";b.style.cssText="margin:6px 0 2px;display:block";
+  const n=document.createElement("span");n.className="note";n.style.cssText="display:block;font-size:12px";n.textContent="…or choose one from your phone or computer above.";
+  b.onclick=()=>cap.click();
+  cap.onchange=()=>{if(!cap.files.length)return;const dt=new DataTransfer();if(inp.multiple)[...inp.files].forEach(f=>dt.items.add(f));[...cap.files].forEach(f=>dt.items.add(f));
+    inp.files=dt.files;inp.dispatchEvent(new Event("change",{bubbles:true}));cap.value="";n.textContent=inp.files.length+(inp.files.length===1?" photo":" photos")+" ready."};
+  inp.addEventListener("change",()=>{if(inp.files.length)n.textContent=inp.files.length+(inp.files.length===1?" photo":" photos")+" ready."});
+  inp.after(b,n,cap)})}
+{let camT=0;new MutationObserver(()=>{clearTimeout(camT);camT=setTimeout(camInputs,50)}).observe(document.body,{childList:true,subtree:true});camInputs()}
+
+// ===================== read match stats from an app screenshot (runs on the phone, free) =====================
+const TJS="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/";
+let TW=null;
+function loadScriptOnce(src){return new Promise((res,rej)=>{if(window.Tesseract)return res();const s=document.createElement("script");s.src=src;s.onload=res;s.onerror=()=>rej(new Error("Couldn't load the screenshot reader. Check your signal."));document.head.appendChild(s)})}
+async function ocrWorker(){if(TW)return TW;await loadScriptOnce(TJS+"tesseract.min.js");
+  TW=await Tesseract.createWorker("eng",1,{workerPath:TJS+"worker.min.js",corePath:"https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1",langPath:"https://cdn.jsdelivr.net/npm/@tesseract.js-data/eng@1.0.0/4.0.0_best_int"});
+  await TW.setParameters({tessedit_pageseg_mode:"6",preserve_interword_spaces:"1"});return TW}
+function ocrPrep(file){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),img=new Image();img.onload=()=>{const k=Math.max(1,Math.min(3,1800/img.width));
+    const c=document.createElement("canvas");c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);const x=c.getContext("2d");x.drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(u);
+    const d=x.getImageData(0,0,c.width,c.height),p=d.data;let sum=0;for(let i=0;i<p.length;i+=4){const g=0.299*p[i]+0.587*p[i+1]+0.114*p[i+2];p[i]=p[i+1]=p[i+2]=g;sum+=g}
+    const mean=sum/(p.length/4),dark=mean<128,bg=dark?255-mean:mean,th=bg-28;for(let i=0;i<p.length;i+=4){let g=p[i];if(dark)g=255-g;g=g<th?0:255;p[i]=p[i+1]=p[i+2]=g}
+    x.putImageData(d,0,0);res(c)};img.onerror=()=>rej(new Error("That file isn't a photo we can read."));img.src=u})}
+async function ocrRead(file){const w=await ocrWorker();const c=await ocrPrep(file);const r=await w.recognize(c);return r.data.text||""}
+const OCR_LABELS=[["bl",/best\s*leg|fewest\s*darts|shortest\s*leg/i],["f9",/first\s*(9|nine)|\bf9\b/i],["cop",/(check\s*-?\s*out|double)s?\s*(%|rate|percentage)/i],
+  ["co",/check\s*-?\s*outs?|doubles?\s*(hit)?|darts?\s*at\s*double/i],["hf",/high(est)?\s*(finish|check\s*-?\s*out|out)|best\s*(finish|check\s*-?\s*out)|top\s*finish/i],
+  ["hs",/high(est)?\s*score|best\s*score/i],["tda",/3\s*-?\s*da\b|3\s*-?\s*dart|average|\bavg\b|\bppd\b/i],["b160",/160\s*\+/],["b140",/140\s*\+/],["b120",/120\s*\+/],["b100",/100\s*\+/],
+  ["b180",/180\s*['’]?\s*s?(?!\s*\+)|max(imum)?s?\b|ton\s*80/i],["legs",/\blegs?\b(\s*won)?/i]];
+const normName=s=>String(s||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+function nameAt(text,name){if(Array.isArray(name)){let b=-1;for(const x of name){const i=nameAt(text,x);if(i>=0&&(b<0||i<b))b=i}return b}const n=normName(name);if(n.length<3)return -1;const t=text.toLowerCase().replace(/[^a-z0-9\n]/g,"");let i=t.indexOf(n);if(i>=0)return i;
+  const first=normName(String(name).split(/\s+/)[0]);if(first.length>=3){i=t.indexOf(first);if(i>=0)return i}return -1}
+function ocrParse(text,nameA,nameB){const out={stats:{},legs:null,swap:null,found:0};const lines=text.split(/\n/).map(s=>s.replace(/[|]/g," ").trim()).filter(Boolean);
+  const ia=nameAt(text,nameA),ib=nameAt(text,nameB);if(ia>=0&&ib>=0)out.swap=ib<ia;else if(ia>=0||ib>=0)out.swap=null;
+  for(const raw of lines){const line=raw.replace(/(\d),(\d)/g,"$1.$2");
+    let lab=null,m=null;for(const [k,re] of OCR_LABELS){m=line.match(re);if(m){lab=k;break}}
+    if(!lab){const sc=line.match(/^\D{0,60}?(\d{1,2})\s*[-:–]\s*(\d{1,2})\D{0,60}$/);if(sc&&!out.legs)out.legs=[+sc[1],+sc[2]];continue}
+    const rest=line.slice(0,m.index)+" "+line.slice(m.index+m[0].length);
+    if(lab==="co"){const fr=[...rest.matchAll(/(\d{1,3})\s*\/\s*(\d{1,3})/g)];if(fr.length>=2){out.stats.co=[+fr[0][1],+fr[fr.length-1][1]];out.stats.dbl=[+fr[0][2],+fr[fr.length-1][2]];out.found++}continue}
+    const nums=[...rest.matchAll(/\d{1,3}(?:\.\d{1,2})?/g)].map(x=>+x[0]);if(nums.length<2)continue;const pair=[nums[0],nums[nums.length-1]];
+    if(lab==="legs"){if(!out.legs&&pair.every(v=>v<=11))out.legs=pair;continue}
+    if(out.stats[lab])continue;out.stats[lab]=pair;out.found++}
+  const s=out.stats;
+  if(s.tda&&s.tda.some(v=>v>180))delete s.tda;if(s.f9&&s.f9.some(v=>v>180))delete s.f9;
+  ["hf"].forEach(k=>{if(s[k]&&s[k].some(v=>v>170))delete s[k]});["hs"].forEach(k=>{if(s[k]&&s[k].some(v=>v>180))delete s[k]});
+  ["b180","b160","b140","b120","b100","bl"].forEach(k=>{if(s[k]&&s[k].some(v=>v!==Math.floor(v)||v>200))delete s[k]});
+  if(!s.cop&&s.co&&s.dbl)s.cop=s.co.map((h,i)=>s.dbl[i]?Math.round(h/s.dbl[i]*1000)/10:0);
+  return out}
+// a reusable "read my screenshot" control: fileInput = where screenshots go, fill(result) puts values into the form
+function ocrButton(after,fileInput,names,fill){if(after.querySelector&&after.parentElement.querySelector(".ocrbox"))return;
+  const box=document.createElement("div");box.className="ocrbox";
+  box.innerHTML=`<button type="button" class="btn primary" data-ocr>📷 Read the numbers from my screenshot</button><button type="button" class="btn" data-swap hidden>⇄ Swap players</button><p class="note" data-ocrmsg>Add a screenshot of the app's match stats screen and the boxes fill in by themselves. Then check every number.</p>`;
+  after.after(box);fileInput.addEventListener("change",()=>{if(fileInput.files&&fileInput.files.length)setTimeout(()=>box.querySelector("[data-ocr]").click(),60)});const msg=box.querySelector("[data-ocrmsg]"),sw=box.querySelector("[data-swap]");let last=null;
+  sw.onclick=()=>{if(!last)return;last.swap=!last.swap;fill(last);msg.innerHTML="Swapped. Check the names line up with the numbers."};
+  box.querySelector("[data-ocr]").onclick=async()=>{const f=fileInput.files&&fileInput.files[0];if(!f){msg.textContent="First add the screenshot (Take a photo or choose one), then tap this again.";return}
+    msg.textContent="Reading the screenshot… the first time takes about 10 seconds.";
+    try{const [na,nb]=names();const texts=[];for(const fl of [...fileInput.files].slice(0,3))texts.push(await ocrRead(fl));
+      const r=ocrParse(texts.join("\n"),na,nb);last=r;if(r.swap===null)r.swap=false;
+      if(!r.found&&!r.legs){msg.innerHTML="Couldn't find any stats in that picture. Use a clear screenshot of the app's stats screen, or type the numbers in.";return}
+      fill(r);sw.hidden=false;
+      msg.innerHTML=`<b>✅ Filled ${r.found+(r.legs?1:0)} rows from your screenshot.</b> Check every number against the app before sending.${r.swap===false&&nameAt(texts.join(" "),na)<0?" We couldn't see the player names, so check they're the right way round (use Swap if not).":""}`}
+    catch(e){msg.textContent=e.message||"Couldn't read that screenshot."}}}
+
+{const qp=$("qProof");if(qp)ocrButton(qp.closest("label")||qp,qp,()=>{if(!$("qA").value||!$("qB").value)throw new Error("Pick both players above first, then tap this again.");return [$("qA").value,$("qB").value]},r=>{
+  const ia=r.swap?1:0,ib=r.swap?0:1;if(r.legs){$("qLA").value=r.legs[ia];$("qLB").value=r.legs[ib]}
+  const d=document.querySelector('[data-stx="q"]');if(d)d.open=true;
+  for(const k of ["tda","f9","co","dbl","hf","hs","bl","b180","b160","b140","b120","b100"]){const s=r.stats[k];if(!s)continue;const ea=$("qa_"+k),eb=$("qb_"+k);if(ea)ea.value=s[ia];if(eb)eb.value=s[ib]}})}
+
+/* ===================== 11 Regt extras: friendlies, cancel match, Edit all (Jon, Karl, Alex), points adjustments ===================== */
+const ADMIN_NAMES={1:"Jon",2:"Karl",3:"Alex"};
+// ---------- friendly set-up ----------
+{const fr=document.createElement("div");fr.className="row";fr.style.marginTop="8px";
+  fr.innerHTML=`<label class="f">Match type<select id="selKind"><option value="league">League (counts in the table)</option><option value="friendly">Friendly (doesn't count)</option></select></label><label class="f" id="ftWrap" hidden>First to<select id="selFt"><option>1</option><option selected>3</option><option>5</option><option>7</option></select></label>`;
+  $("setupErr").before(fr);$("selKind").onchange=()=>{$("ftWrap").hidden=$("selKind").value!=="friendly"}}
+const _startLocal=$("startBtn").onclick,_startOnline=$("startOnline").onclick;
+function frCheck(){const a=$("selA").value,b=$("selB").value;$("setupErr").textContent="";if(!a||!b){$("setupErr").textContent="Pick both players.";return null}if(a===b){$("setupErr").textContent="Pick two different players.";return null}return {a,b,win:+$("selFt").value}}
+$("startBtn").onclick=()=>{if($("selKind").value!=="friendly")return _startLocal();const c=frCheck();if(!c)return;liveMsg="";
+  S.match={a:c.a,b:c.b,first:$("selFirst").value,date:$("matchDate").value||today(),legs:[{starter:$("selFirst").value,visits:[],winner:null}],submitted:false,win:c.win,draw:0,friendly:true};
+  typed="";dblSel=null;pendingCo=null;viewLeg=null;save();renderScorer()};
+$("startOnline").onclick=async()=>{if($("selKind").value!=="friendly")return _startOnline();const c=frCheck();if(!c)return;
+  if(!CODE){$("setupErr").textContent="Enter the league code on the Home page first.";return}$("startOnline").disabled=true;
+  const {data,error}=await rpcv("lg_v_live_create",{p_code:CODE,p_a:c.a,p_b:c.b,p_first:$("selFirst").value,p_date:$("matchDate").value||today(),p_side:$("selMe").value,p_meta:{win:c.win,draw:0,friendly:true}});
+  $("startOnline").disabled=false;if(error){$("setupErr").textContent="Couldn't start: "+error.message;return}
+  const {data:row}=await db.from("lg_live2").select("*").eq("code",data).maybeSingle();S.match=fromRow(row,$("selMe").value);typed="";dblSel=null;pendingCo=null;viewLeg=null;save();renderScorer()};
+const _fromRowX=fromRow;fromRow=function(row,side){const m=_fromRowX(row,side);const mt=(row.state&&row.state.meta)||{};m.friendly=!!mt.friendly;m.cancelled=(row.state&&row.state.cancelled)||null;return m};
+const _matchDoneX=matchDone;matchDone=function(){const m=M();return !!(m&&m.cancelled)||_matchDoneX()};
+
+// ---------- cancel match ----------
+{const ub=$("undoBtn");const cb=document.createElement("button");cb.className="btn";cb.id="cancelBtn";cb.textContent="Cancel match";ub.after(cb);
+  cb.onclick=async()=>{const m=M();if(!m||m.cancelled)return;if(cb.dataset.armed!=="1"){cb.dataset.armed="1";cb.textContent="Tap again to cancel";setTimeout(()=>{cb.dataset.armed="";cb.textContent="Cancel match"},4000);return}
+    cb.dataset.armed="";const by=isLive()?(me()==="A"?m.a:m.b):"";
+    if(isLive()){cb.disabled=true;const {data,error}=await rpcv("lg_v_live_update",{p_code:CODE,p_match:m.live.code,p_version:m.live.version,p_state:{legs:m.legs,submitted:m.submitted,cancelled:{by,at:new Date().toISOString()}}});cb.disabled=false;
+      if(error){liveMsg="Couldn't cancel ("+error.message+"). Try again.";await pullLive(true);return}m.live.version=data}
+    m.cancelled={by,at:new Date().toISOString()};pendingCo=null;save();renderScorer()}}
+const _submitX=$("submitBtn").onclick;$("submitBtn").onclick=()=>{const m=M();if(m&&(m.cancelled||m.friendly))return;return _submitX()};
+const _renderScorerX=renderScorer;renderScorer=function(){_renderScorerX();const m=M();const cb=$("cancelBtn");if(!m){if(cb)cb.hidden=true;return}
+  const done=_matchDoneX();if(cb)cb.hidden=!!m.cancelled||done||!!m.submitted;
+  if(m.friendly&&!m.cancelled){$("legLine").textContent="Friendly · "+$("legLine").textContent.replace(/^Friendly · /,"");
+    if(done){const a=legsWon("A"),b=legsWon("B");const w=a===b?null:(a>b?m.a:m.b);$("doneText").textContent=(w?`${w} wins ${Math.max(a,b)}-${Math.min(a,b)}`:`Draw ${a}-${b}`)+". Friendlies don't count in the league. Tap New match to play again.";$("submitBtn").hidden=true}}
+  else $("submitBtn").hidden=!!m.cancelled;
+  if(m.cancelled){$("legLine").textContent="Match cancelled";["inputArea","coArea","waitArea"].forEach(id=>$(id).hidden=true);$("doneArea").hidden=false;
+    $("doneText").textContent=`Match cancelled${m.cancelled.by?" by "+m.cancelled.by:""}. Nothing is saved. Tap New match to start again.`}};
+
+// ---------- points adjustments in the tables ----------
+S.adj=[];
+const _loadDataX=loadData;loadData=async function(){await _loadDataX();if(!CURS)return;const {data}=await db.from("lg_adjust").select("*").eq("season",CURS.id).eq("removed",false).order("id");S.adj=data||[];renderAll()};
+const _aggregateX=aggregate;aggregate=function(){const res=_aggregateX();if(!S.adj||!S.adj.length)return res;
+  res.list.forEach((a,idx)=>{const adj=S.adj.filter(j=>j.name===a.name).reduce((t,j)=>t+j.points,0);if(!adj)return;a.adj=adj;a.Pts+=adj;a.PPG=a.P?a.Pts/a.P:0;
+    a.key=a.status!=="Active"?-1:Math.round(a.PPG*1000)*1e8+(a.LD+1000)*1e4+a.LF*10+(100-idx)/100});
+  res.list.forEach(a=>{a.pos=undefined;a.q=false});
+  [1,2,3].forEach(d=>{const t=res.list.filter(a=>a.div===d&&a.key>=0).sort((x,y)=>y.key-x.key);t.forEach((a,i)=>a.pos=i+1);t.filter(a=>a.elig).slice(0,PLACES).forEach(a=>a.q=true)});
+  return res};
+const _renderLeagueX=renderLeague;renderLeague=function(){_renderLeagueX();const o=$("leagueOut");if(!o||!S.adj||!S.adj.length)return;
+  const n=document.createElement("p");n.className="note";n.innerHTML="<b>Points adjustments this season:</b> "+S.adj.map(j=>`${esc(j.name)} ${j.points>0?"+":""}${j.points} (${esc(j.reason)})`).join(" · ");o.appendChild(n)};
+
+// ---------- admin names ----------
+const _adminGoX=$("adminGo").onclick;$("adminGo").onclick=async()=>{await _adminGoX();if(ADMIN_NO)$("adminWho").textContent=`You are ${ADMIN_NAMES[ADMIN_NO]||"Admin "+ADMIN_NO} (Admin ${ADMIN_NO}).`;renderEditAll()};
+const _adminOutX=$("adminOut").onclick;$("adminOut").onclick=()=>{_adminOutX();const c=$("eaCard");if(c)c.remove()};
+
+// ---------- Edit all ----------
+let EA_TAB="res";
+function renderEditAll(){if(!ADMIN){const c=$("eaCard");if(c)c.remove();return}let c=$("eaCard");
+  if(!c){c=document.createElement("div");c.className="card";c.id="eaCard";$("adminPanels").prepend(c)}
+  const tabs=[["res","Results"],["ply","Players"],["tour","Tournament"],["tab","Tables"]].concat(ADMIN_NO===1?[["pw","Passwords"]]:[]);
+  c.innerHTML=`<h2>✏️ Edit all</h2><p class="note">For Jon, Karl and Alex. Every change is recorded on the Admin log.</p>
+   <div class="chips">${tabs.map(([k,l])=>`<button data-ea="${k}" aria-pressed="${EA_TAB===k}">${l}</button>`).join("")}</div><div id="eaBody" style="margin-top:10px"></div><p class="err" id="eaMsg"></p>`;
+  c.querySelectorAll("[data-ea]").forEach(b=>b.onclick=()=>{EA_TAB=b.dataset.ea;renderEditAll()});
+  const B=$("eaBody"),msg=t=>{$("eaMsg").innerHTML=t};const ok=t=>msg(`<span style="color:var(--ok)">${esc(t)}</span>`);
+  const pOpts=(sel)=>S.players.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(p=>`<option value="${p.id}" ${sel===p.id?"selected":""}>${esc(p.name)} (Div ${p.div??"–"}, ${esc(p.status)})</option>`).join("");
+  if(EA_TAB==="res"){const rs=S.log.slice().reverse();
+    B.innerHTML=rs.length?`<label class="f">Pick a result (this season)<select id="eaR"><option value="">Choose…</option>${rs.map(r=>`<option value="${r.id}">${fmtD(r.date)} · ${esc(r.a)} ${r.la}-${r.lb} ${esc(r.b)}${r.disp?" (disputed)":""}</option>`).join("")}</select></label><div id="eaRf"></div>`:'<p class="note">No results this season yet.</p>';
+    const sel=$("eaR");if(sel)sel.onchange=()=>{const r=S.log.find(x=>x.id===+sel.value);const f=$("eaRf");if(!r){f.innerHTML="";return}
+      f.innerHTML=`<div class="row" style="margin-top:8px"><label class="f">Date<input type="date" id="eaD" value="${r.date}"></label><label class="f">${esc(r.a)} legs<input id="eaLa" type="number" min="0" max="5" value="${r.la}"></label><label class="f">${esc(r.b)} legs<input id="eaLb" type="number" min="0" max="5" value="${r.lb}"></label></div>
+        ${statsFormHTML("ea",r.a,r.b,true)}<label class="f" style="margin-top:8px">Note<input id="eaN" maxlength="300" value="${esc(r.note||"")}"></label><div class="row" style="margin-top:8px"><button class="btn primary" id="eaRs">Save changes</button></div>`;
+      SF.forEach(([k])=>{const a=$("eaa_"+k),b=$("eab_"+k);if(a&&r.sa[k]!=null)a.value=r.sa[k];if(b&&r.sb[k]!=null)b.value=r.sb[k]});
+      $("eaRs").onclick=async()=>{const la=+$("eaLa").value,lb=+$("eaLb").value;const st=readStats("ea",la,lb,r.a,r.b,false);const sb=$("eaRs");if(st.err&&sb.dataset.armed!=="1"){sb.dataset.armed="1";sb.textContent="Save anyway";msg(esc(st.err)+". Check it, or tap Save anyway.");return}
+        const {error}=await db.rpc("lg_admin_edit_result",{p_pin:ADMIN,p_id:r.id,p_date:$("eaD").value,p_la:la,p_lb:lb,p_sa:{...r.sa,...st.sa},p_sb:{...r.sb,...st.sb},p_note:$("eaN").value});
+        if(error){msg(esc(error.message));return}ok("Result updated. Tables recalculated.");await loadData();loadAdminLog()}}}
+  else if(EA_TAB==="ply"){B.innerHTML=`<label class="f">Pick a player<select id="eaP"><option value="">Choose…</option>${pOpts()}</select></label><div id="eaPf"></div>`;
+    $("eaP").onchange=()=>{const p=S.players.find(x=>x.id===+$("eaP").value);const f=$("eaPf");if(!p){f.innerHTML="";return}
+      f.innerHTML=`<div class="row" style="margin-top:8px"><label class="f">Name<input id="eaPn" maxlength="40" value="${esc(p.name)}"></label><label class="f">Starting 3DA<input id="eaPs" type="number" step="0.01" value="${p.start||""}"></label></div>
+       <div class="row" style="margin-top:8px"><label class="f">Division<select id="eaPd">${[1,2,3].map(d=>`<option ${p.div===d?"selected":""}>${d}</option>`).join("")}</select></label><label class="f">Status<select id="eaPt">${["Active","Pending","Withdrawn"].map(s=>`<option ${p.status===s?"selected":""}>${s}</option>`).join("")}</select></label></div>
+       <p class="note">Renaming updates every result and tournament under the new name.</p><div class="row"><button class="btn primary" id="eaPsv">Save changes</button></div>`;
+      $("eaPsv").onclick=async()=>{const n=$("eaPn").value.trim(),s=$("eaPs").value===""?null:+$("eaPs").value,d=+$("eaPd").value,t=$("eaPt").value;
+        if(n!==p.name||s!==(p.start||null)){const {error}=await db.rpc("lg_admin_edit_player",{p_pin:ADMIN,p_id:p.id,p_name:n,p_start:s});if(error){msg(esc(error.message));return}}
+        if(d!==p.div||t!==p.status){const {error}=await db.rpc("lg_admin_update_player",{p_pin:ADMIN,p_id:p.id,p_division:d,p_status:t});if(error){msg(esc(error.message));return}}
+        ok("Player updated.");await loadData();loadAdminLog()}}}
+  else if(EA_TAB==="tour"){if(!TS.list){B.innerHTML='<p class="note">Loading tournaments…</p>';loadT().then(()=>{if(EA_TAB==="tour")renderEditAll()});return}
+    const t=tCur();const ms=(TS.matches||[]).filter(m=>!m.is_bye&&m.player_a&&m.player_b);
+    B.innerHTML=!t?'<p class="note">No tournament yet.</p>':`<p class="note">${esc(t.name)} (${esc(t.status)}). Enter or fix any result. Changing a knockout winner is only possible before the next round is played.</p>
+      ${ms.length?`<label class="f">Pick a match<select id="eaT"><option value="">Choose…</option>${ms.map(m=>`<option value="${m.id}">${m.stage==="group"?"Group "+m.group_no:"Round "+m.round_no}: ${esc(m.player_a)} v ${esc(m.player_b)}${m.winner?` (${m.legs_a}-${m.legs_b})`:" (no result)"}</option>`).join("")}</select></label><div id="eaTf"></div>`:'<p class="note">No matches drawn yet.</p>'}`;
+    const sel=$("eaT");if(sel)sel.onchange=()=>{const m=ms.find(x=>x.id===+sel.value);const f=$("eaTf");if(!m){f.innerHTML="";return}const tg=target(t,m);
+      f.innerHTML=`<div class="row" style="margin-top:8px"><label class="f">${esc(m.player_a)} legs<input id="eaTa" type="number" min="0" max="${tg}" value="${m.legs_a??""}"></label><label class="f">${esc(m.player_b)} legs<input id="eaTb" type="number" min="0" max="${tg}" value="${m.legs_b??""}"></label></div>
+        <p class="note">First to ${tg}. Match stats are kept.</p><div class="row"><button class="btn primary" id="eaTs">Save result</button></div>`;
+      $("eaTs").onclick=async()=>{const {error}=await db.rpc("lg_admin_edit_t_result",{p_pin:ADMIN,p_match:m.id,p_la:+$("eaTa").value,p_lb:+$("eaTb").value,p_sa:null,p_sb:null});
+        if(error){msg(esc(error.message));return}ok("Tournament result saved.");await loadT();loadAdminLog();renderEditAll()}}}
+  else if(EA_TAB==="tab"){B.innerHTML=`<p class="note">Season name and dates: use <b>Season settings</b> above. Here you can add or take away points, e.g. for a forfeit or a penalty.</p>
+     ${S.adj.length?`<div class="list">${S.adj.map(j=>`<div class="row" style="justify-content:space-between;align-items:center"><span><b>${esc(j.name)}</b> ${j.points>0?"+":""}${j.points} · ${esc(j.reason)} <span class="note">(by ${ADMIN_NAMES[j.admin_no]||"admin"})</span></span><button class="btn" data-adr="${j.id}">Remove</button></div>`).join("")}</div>`:'<p class="note">No adjustments this season.</p>'}
+     <div class="row" style="margin-top:10px"><label class="f">Player<select id="eaAp">${S.players.filter(p=>p.status==="Active").sort((a,b)=>a.name.localeCompare(b.name)).map(p=>`<option>${esc(p.name)}</option>`).join("")}</select></label><label class="f" style="flex:0 1 110px">Points (+/-)<input id="eaAn" type="number" min="-50" max="50" value="-3"></label></div>
+     <label class="f" style="margin-top:6px">Reason (shown under the table)<input id="eaAr" maxlength="120" placeholder="e.g. Forfeit v Smith, 12 Nov"></label><div class="row" style="margin-top:8px"><button class="btn primary" id="eaAg">Add adjustment</button></div>`;
+    $("eaAg").onclick=async()=>{const {error}=await db.rpc("lg_admin_adjust",{p_pin:ADMIN,p_name:$("eaAp").value,p_points:+$("eaAn").value,p_reason:$("eaAr").value});if(error){msg(esc(error.message));return}ok("Adjustment added.");await loadData();loadAdminLog();renderEditAll()};
+    B.querySelectorAll("[data-adr]").forEach(b=>b.onclick=async()=>{if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="Sure?";return}const {error}=await db.rpc("lg_admin_adjust_remove",{p_pin:ADMIN,p_id:+b.dataset.adr});if(error){msg(esc(error.message));return}await loadData();loadAdminLog();renderEditAll()})}
+  else if(EA_TAB==="pw"){B.innerHTML=`<p class="note">Give Karl or Alex a temporary password. They unlock Admin with it, then change it under <b>Change my admin password</b>. You never need to know their real one.</p>
+     <div class="row"><label class="f">Who<select id="eaWs"><option value="2">Karl (Admin 2)</option><option value="3">Alex (Admin 3)</option></select></label><label class="f">Temporary password (8+ characters)<input id="eaWp" type="password" autocomplete="new-password"></label></div>
+     <div class="row" style="margin-top:8px"><button class="btn primary" id="eaWg">Set temporary password</button></div>`;
+    $("eaWg").onclick=async()=>{const {error}=await db.rpc("lg_admin_set_slot_password",{p_pin:ADMIN,p_slot:+$("eaWs").value,p_new:$("eaWp").value});$("eaWp").value="";if(error){msg(esc(error.message));return}ok("Done. Send it to them privately (not in a group chat).");loadAdminLog()}}}
+const _renderAdminBitsX=renderAdminBits;renderAdminBits=function(){_renderAdminBitsX();if(ADMIN&&!$("eaCard"))renderEditAll()};
+
 })();
 </script>
 </body>
