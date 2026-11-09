@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-4IjU0FmHjA3fgUdsdEROyq4G1BzbA2rNJnEKGGm6JgU=' 'sha256-Fs13hxDP5dhRd76eO60GJL90dPMwljynUsLJUEPQOd8=' https://cdn.jsdelivr.net 'wasm-unsafe-eval'; worker-src blob: https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://ooiauesumnqcjlulpteb.supabase.co; connect-src https://ooiauesumnqcjlulpteb.supabase.co wss://ooiauesumnqcjlulpteb.supabase.co https://cdn.jsdelivr.net; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-4IjU0FmHjA3fgUdsdEROyq4G1BzbA2rNJnEKGGm6JgU=' 'sha256-8zrkb5RCp2H40Iog3Jh7tPc6xuGvZNLEb4/N6WKkE2Y=' https://cdn.jsdelivr.net 'wasm-unsafe-eval'; worker-src blob: https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://ooiauesumnqcjlulpteb.supabase.co; connect-src https://ooiauesumnqcjlulpteb.supabase.co wss://ooiauesumnqcjlulpteb.supabase.co https://cdn.jsdelivr.net; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1D2A25">
@@ -303,7 +303,7 @@ details.stx summary{cursor:pointer;font-weight:600;font-size:14px}
   <section class="view" id="v-league" hidden>
     <div class="card">
       <h2>League tables</h2>
-      <p class="note" style="margin-top:-4px">Ranked by points per game, then leg difference, then legs won. <b>Q</b> = playoff place: top 2 who have played at least 50% of their fixtures.</p>
+      <p class="note" style="margin-top:-4px">Ranked by total points, then leg difference, then legs won. <b>Q</b> = playoff place: top 2 who have played at least 50% of their fixtures.</p>
       <div id="leagueOut"></div>
     </div>
     <div class="card" id="pastBox" hidden><h2>Past seasons</h2><label class="f">Season<select id="pastSel"></select></label><div id="pastOut"></div></div>
@@ -433,7 +433,7 @@ details.stx summary{cursor:pointer;font-weight:600;font-size:14px}
       </div>
       <h2>If matches aren't played</h2>
       <ul><li>Unplayed matches are void: no points to either player, no penalty.</li>
-      <li>Tables are ranked by points per game, so players who play fewer games aren't punished.</li>
+      <li>Tables are ranked by total points (3 for a win, 1 for a draw), then leg difference, then legs won. The more you play, the more points you can earn.</li>
       <li><b>Play-by dates:</b> My matches suggests a "play by" date for each opponent so games are spread across the season. It's a guide, not a deadline: late matches still count, and nobody loses points for them.</li>
       <li>Tap any player's name to see their profile: results, averages, head-to-heads and season history.</li>
       <li>To take a playoff place you must play at least 50% of your fixtures. Top 2 qualifiers per division go through.</li>
@@ -603,7 +603,7 @@ function aggregate(){
     const n=list.filter(b=>b.div===a.div&&b.status==="Active").length;
     a.due=a.status==="Active"?(n-1)*TIMES:0;a.minq=Math.ceil(a.due*MINPCT);a.elig=a.status==="Active"&&a.P>0&&a.P>=a.minq;
     a.tda=a.tdaN?a.tdaS/a.tdaN:null;a.f9=a.f9N?a.f9S/a.f9N:null;a.cop=a.dbl?a.co/a.dbl:null;
-    a.key=a.status!=="Active"?-1:Math.round(a.PPG*1000)*1e8+(a.LD+1000)*1e4+a.LF*10+(100-idx)/100});
+    a.key=a.status!=="Active"?-1:(a.Pts+1000)*1e8+(a.LD+1000)*1e4+a.LF*10+(100-idx)/100});
   [1,2,3].forEach(d=>{const t=list.filter(a=>a.div===d&&a.key>=0).sort((x,y)=>y.key-x.key);t.forEach((a,i)=>a.pos=i+1);
     t.filter(a=>a.elig).slice(0,PLACES).forEach(a=>a.q=true)});
   return {list,sts};
@@ -1030,7 +1030,7 @@ function renderHome(){
   const {list,sts}=aggregate(),ok=sts.filter(x=>x==="OK").length,due=list.reduce((t,a)=>t+a.due,0)/2;
   const top=(arr,f,n=3)=>arr.slice(0,n).map((a,i)=>`<li><span><span class="r">${i+1}</span>${pn(a.name)}</span><span class="v">${f(a)}</span></li>`).join("")||'<li><span class="note">Nothing yet</span></li>';
   const lead=[1,2,3].map(d=>{const t=list.filter(a=>a.div===d&&a.key>=0).sort((x,y)=>x.pos-y.pos);
-    return `<div class="card hon"><h2>Division ${d}</h2><ol>${t.slice(0,3).map(a=>`<li><span><span class="r">${a.pos}</span><b>${pn(a.name)}</b>${a.q?' <span class="pill ok">Q</span>':""}</span><span class="note" style="font-variant-numeric:tabular-nums">${a.Pts} pts · ${a.P} pl · <b class="v" style="font-size:18px;color:var(--ink)">${a.PPG.toFixed(2)}</b> PPG</span></li>`).join("")||'<li class="note">No players</li>'}</ol>
+    return `<div class="card hon"><h2>Division ${d}</h2><ol>${t.slice(0,3).map(a=>`<li><span><span class="r">${a.pos}</span><b>${pn(a.name)}</b>${a.q?' <span class="pill ok">Q</span>':""}</span><span class="note" style="font-variant-numeric:tabular-nums"><b class="v" style="font-size:18px;color:var(--ink)">${a.Pts}</b> pts · ${a.P} played</span></li>`).join("")||'<li class="note">No players</li>'}</ol>
       <p class="note" style="margin:6px 0 0">${t.length} players · <a href="#" data-goto="league">full table</a></p></div>`}).join("");
   const by180=list.filter(a=>a.b180>0).sort((x,y)=>y.b180-x.b180||x.name.localeCompare(y.name));
   const byHF=list.filter(a=>a.hf>0).sort((x,y)=>y.hf-x.hf||x.name.localeCompare(y.name));
@@ -1077,7 +1077,7 @@ function weeklyText(){
   L.push("");L.push(recent.length?`Results this week (${recent.length}):`:"No results this week. Get your matches played! 👀");
   recent.slice(-8).forEach(r=>L.push(`• ${r.a} ${r.la}-${r.lb} ${r.b}`));if(recent.length>8)L.push(`• …and ${recent.length-8} more`);
   if(n180||hf){L.push("");if(n180)L.push(`180s this week: ${n180}`);if(hf)L.push(`Best checkout: ${hf.v} (${hf.n})`)}
-  L.push("");[1,2,3].forEach(d=>{const t=list.filter(a=>a.div===d&&a.key>=0).sort((x,y)=>x.pos-y.pos).slice(0,3);if(t.length)L.push(`Div ${d}: `+t.map(a=>`${a.pos}. ${a.name} (${a.PPG.toFixed(2)})`).join("  "))});
+  L.push("");[1,2,3].forEach(d=>{const t=list.filter(a=>a.div===d&&a.key>=0).sort((x,y)=>x.pos-y.pos).slice(0,3);if(t.length)L.push(`Div ${d}: `+t.map(a=>`${a.pos}. ${a.name} (${a.Pts} pts)`).join("  "))});
   L.push("");L.push(`${left} league match${left===1?"":"es"} still to play${days!=null&&days>=0?`, ${days} day${days===1?"":"s"} left`:""}.`);
   L.push(`Tables, My matches and results: ${location.href.split("#")[0]}`);
   return L.join("\n");
@@ -1628,7 +1628,7 @@ S.adj=[];
 const _loadDataX=loadData;loadData=async function(){await _loadDataX();if(!CURS)return;const {data}=await db.from("lg_adjust").select("*").eq("season",CURS.id).eq("removed",false).order("id");S.adj=data||[];renderAll()};
 const _aggregateX=aggregate;aggregate=function(){const res=_aggregateX();if(!S.adj||!S.adj.length)return res;
   res.list.forEach((a,idx)=>{const adj=S.adj.filter(j=>j.name===a.name).reduce((t,j)=>t+j.points,0);if(!adj)return;a.adj=adj;a.Pts+=adj;a.PPG=a.P?a.Pts/a.P:0;
-    a.key=a.status!=="Active"?-1:Math.round(a.PPG*1000)*1e8+(a.LD+1000)*1e4+a.LF*10+(100-idx)/100});
+    a.key=a.status!=="Active"?-1:(a.Pts+1000)*1e8+(a.LD+1000)*1e4+a.LF*10+(100-idx)/100});
   res.list.forEach(a=>{a.pos=undefined;a.q=false});
   [1,2,3].forEach(d=>{const t=res.list.filter(a=>a.div===d&&a.key>=0).sort((x,y)=>y.key-x.key);t.forEach((a,i)=>a.pos=i+1);t.filter(a=>a.elig).slice(0,PLACES).forEach(a=>a.q=true)});
   return res};
