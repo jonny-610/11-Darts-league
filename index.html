@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-4IjU0FmHjA3fgUdsdEROyq4G1BzbA2rNJnEKGGm6JgU=' 'sha256-oih0H5Mu9fnx+/cia5cXieikcP+rTBjJXjEhf8BEdl4=' https://cdn.jsdelivr.net 'wasm-unsafe-eval'; worker-src blob: https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://ooiauesumnqcjlulpteb.supabase.co; connect-src https://ooiauesumnqcjlulpteb.supabase.co wss://ooiauesumnqcjlulpteb.supabase.co https://cdn.jsdelivr.net; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-4IjU0FmHjA3fgUdsdEROyq4G1BzbA2rNJnEKGGm6JgU=' 'sha256-yfNP4q8aZpHP/MzvvbZme+Zt8NTW87XIqoxdwUCd0l0=' https://cdn.jsdelivr.net 'wasm-unsafe-eval'; worker-src blob: https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://ooiauesumnqcjlulpteb.supabase.co; connect-src https://ooiauesumnqcjlulpteb.supabase.co wss://ooiauesumnqcjlulpteb.supabase.co https://cdn.jsdelivr.net; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1D2A25">
@@ -163,7 +163,6 @@ details.stx summary{cursor:pointer;font-weight:600;font-size:14px}
 @media (max-width:420px){.entries{columns:1}}
 @media (max-width:420px){.pcard .big{font-size:46px}.entry{font-size:38px}}
 @media (prefers-reduced-motion:no-preference){.pcard{transition:background .15s,border-color .15s}}
-.odot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-left:5px;vertical-align:middle;background:#d33}.odot.on{background:#1fa64a;box-shadow:0 0 0 2px rgba(31,166,74,.25)}.cmk{color:var(--ok,#1fa64a);font-size:11px;font-weight:700;margin-left:3px;vertical-align:middle}
 </style>
 </head>
 <body>
@@ -1206,7 +1205,7 @@ async function loadAdminLog(){
   $("alOut").querySelectorAll("[data-cancel]").forEach(b=>b.onclick=async()=>{const {error}=await db.rpc("lg_admin_cancel_request",{p_pin:ADMIN,p_log:+b.dataset.cancel});$("alMsg").textContent=error?error.message:"Request cancelled.";loadAdminLog()});
 }
 function renderAdminBits(){const b=$("dispBanner");if(!b)return;const n=S.log.filter(r=>r.disp).length;b.hidden=!(ADMIN&&n);b.textContent=n?`${n} disputed result${n>1?"s":""} waiting for a decision on the Admin log page.`:"";renderDisputes()}
-const pn=n=>n?`<a class="pn" href="#" data-prof="${esc(n)}">${esc(n)}</a>${window.__odot?window.__odot(n):""}`:"";
+const pn=n=>n?`<a class="pn" href="#" data-prof="${esc(n)}">${esc(n)}</a>`:"";
 let PROF=null;
 document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest("[data-prof]");if(!a)return;e.preventDefault();PROF=a.dataset.prof;show("profile")});
 function statsOf(rows,n){const t={P:0,W:0,D:0,L:0,LF:0,LA:0,tS:0,tN:0,fS:0,fN:0,b180:0,hf:0,bl:0,co:0,dbl:0};
@@ -1661,7 +1660,7 @@ function renderEditAll(){if(!ADMIN){const c=$("eaCard");if(c)c.remove();return}l
   else if(EA_TAB==="ply"){B.innerHTML=`<label class="f">Pick a player<select id="eaP"><option value="">Choose…</option>${pOpts()}</select></label><div id="eaPf"></div>`;
     $("eaP").onchange=()=>{const p=S.players.find(x=>x.id===+$("eaP").value);const f=$("eaPf");if(!p){f.innerHTML="";return}
       f.innerHTML=`<div class="row" style="margin-top:8px"><label class="f">Name<input id="eaPn" maxlength="40" value="${esc(p.name)}"></label><label class="f">Starting 3DA<input id="eaPs" type="number" step="0.01" value="${p.start||""}"></label></div>
-       <div class="row" style="margin-top:8px"><label class="f">Division<select id="eaPd">${[1,2,3].map(d=>`<option ${p.div===d?"selected":""}>${d}</option>`).join("")}</select></label><label class="f">Status<select id="eaPt">${["Active","Pending","Hold","Withdrawn"].map(s=>`<option ${p.status===s?"selected":""}>${s}</option>`).join("")}</select></label></div>
+       <div class="row" style="margin-top:8px"><label class="f">Division<select id="eaPd">${[1,2,3].map(d=>`<option ${p.div===d?"selected":""}>${d}</option>`).join("")}</select></label><label class="f">Status<select id="eaPt">${["Active","Pending","Withdrawn"].map(s=>`<option ${p.status===s?"selected":""}>${s}</option>`).join("")}</select></label></div>
        <p class="note">Renaming updates every result and tournament under the new name.</p><div class="row"><button class="btn primary" id="eaPsv">Save changes</button></div>`;
       $("eaPsv").onclick=async()=>{const n=$("eaPn").value.trim(),s=$("eaPs").value===""?null:+$("eaPs").value,d=+$("eaPd").value,t=$("eaPt").value;
         if(n!==p.name||s!==(p.start||null)){const {error}=await db.rpc("lg_admin_edit_player",{p_pin:ADMIN,p_id:p.id,p_name:n,p_start:s});if(error){msg(esc(error.message));return}}
@@ -1687,65 +1686,6 @@ function renderEditAll(){if(!ADMIN){const c=$("eaCard");if(c)c.remove();return}l
      <div class="row" style="margin-top:8px"><button class="btn primary" id="eaWg">Set temporary password</button></div>`;
     $("eaWg").onclick=async()=>{const {error}=await db.rpc("lg_admin_set_slot_password",{p_pin:ADMIN,p_slot:+$("eaWs").value,p_new:$("eaWp").value});$("eaWp").value="";if(error){msg(esc(error.message));return}ok("Done. Send it to them privately (not in a group chat).");loadAdminLog()}}}
 const _renderAdminBitsX=renderAdminBits;renderAdminBits=function(){_renderAdminBitsX();if(ADMIN&&!$("eaCard"))renderEditAll()};
-
-/* ===================== 11 Regt: online dots, code marker, Season sign-up (hold table), Create league ===================== */
-let SIGNUP=0,S2MSG="";S.seen={};S.verify=[];
-function odot(n){const p=S.seen[n];if(!p)return "";const on=p.last_seen&&Date.now()-new Date(p.last_seen).getTime()<5*60e3;
-  return `<span class="odot ${on?"on":"off"}" title="${on?"Online now":"Not active"+(p.last_seen?" · last seen "+new Date(p.last_seen).toLocaleString("en-GB",{weekday:"short",hour:"2-digit",minute:"2-digit"}):"")}" aria-label="${on?"Online":"Not active"}"></span>${p.code_ok_at?'<span class="cmk" title="Has logged in with their player code" aria-label="Logged in with code">✓</span>':""}`}
-const _loadDataS2=loadData;loadData=async function(){await _loadDataS2();
-  const [pl,rd]=await Promise.all([db.from("lg_players").select("name,last_seen,code_ok_at").order("name"),db.rpc("lg_v_signup_round")]);
-  S.seen={};(pl.data||[]).forEach(x=>S.seen[x.name]=x);SIGNUP=+rd.data||0;
-  if(SIGNUP){const v=await db.from("lg_verify").select("*").eq("round",SIGNUP).order("id");S.verify=v.data||[]}else S.verify=[];renderAll()};
-async function seenPing(){if(document.visibilityState!=="visible")return;try{if(CODE&&PCODE&&ME)await db.rpc("lg_v_seen",{p_code:CODE,p_pcode:PCODE,p_name:ME});const pl=await db.from("lg_players").select("name,last_seen,code_ok_at").order("name");if(pl.data){S.seen={};pl.data.forEach(x=>S.seen[x.name]=x);if(!S.match)renderAll()}}catch(_){}}
-setTimeout(seenPing,3000);setInterval(seenPing,120000);document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")seenPing()});
-window.__odot=odot;
-const myVerify=n=>S.verify.filter(v=>v.name===n).slice(-1)[0];
-const siteAvg=n=>{const {list}=aggregate();const a=list.find(x=>x.name===n);return a&&a.tdaN?a.tdaS/a.tdaN:null};
-const vIcon=v=>!v?'<span class="note">not sent</span>':v.status==="approved"?`<b>${(+v.tda).toFixed(2)}</b> ✅`:v.status==="pending"?`${(+v.tda).toFixed(2)} ⏳`:`${(+v.tda).toFixed(2)} ❌`;
-
-// ---------- player: send DartCounter average ----------
-const _renderMineS2=renderMine;renderMine=function(){_renderMineS2();const out=$("mineOut");if(!out||!SIGNUP||!ME||!S.players.some(p=>p.name===ME))return;const v=myVerify(ME),sa=siteAvg(ME);
-  const c=document.createElement("div");c.className="card";c.style.borderColor="var(--accent)";
-  c.innerHTML=`<h2>Season ${SIGNUP} sign-up</h2><p class="note" style="margin-top:-4px">Everyone re-checks their average before the new season. Send a screenshot of your <b>DartCounter</b> statistics showing your 3-dart average. An admin checks it, then the league is split into 3 divisions by average.</p>
-   <p>Your status: ${v?vIcon(v)+" "+({approved:"Approved. You're in.",pending:"Waiting for an admin to check.",rejected:"Not accepted"+(v.note?": "+esc(v.note):"")+". Send it again."})[v.status]:"<b>Not sent yet.</b>"}${sa?` · Site average this season: <b>${sa.toFixed(2)}</b>`:""}</p>
-   ${v&&v.status==="approved"?"":`<div class="row"><label class="f" style="flex:0 1 160px">DartCounter 3-dart average<input id="s2Tda" type="number" step="0.01" min="5" max="120" inputmode="decimal"></label></div>
-   <label class="f" style="margin-top:8px">Screenshot of your DartCounter statistics<input type="file" id="s2Shot" accept="image/*"></label>
-   <div class="row" style="margin-top:8px"><button class="btn primary" id="s2Go">Send for checking</button></div>`}<p class="err" id="s2Err" style="text-align:left">${S2MSG}</p>`;
-  out.prepend(c);const go=$("s2Go");if(!go)return;
-  go.onclick=async()=>{const t=+$("s2Tda").value;if(!PCODE){$("s2Err").textContent="Save your player code on the Home page first.";return}if(!(t>=5&&t<=120)){$("s2Err").textContent="Type your 3-dart average (e.g. 45.20).";return}
-    if(!$("s2Shot").files.length){$("s2Err").textContent="Add the screenshot.";return}go.disabled=true;$("s2Err").textContent="Sending…";
-    try{const paths=await uploadProofs($("s2Shot"));const {error}=await rpcv("lg_v_verify",{p_code:CODE,p_pcode:PCODE,p_name:ME,p_tda:t,p_proofs:paths});if(error)throw new Error(error.message);
-      S2MSG='<span style="color:var(--ok)">Sent. An admin will check it.</span>';await loadData()}catch(e){$("s2Err").textContent=e.message;go.disabled=false}}};
-
-// ---------- public hold table ----------
-const _renderLeagueS2=renderLeague;renderLeague=function(){_renderLeagueS2();const o=$("leagueOut");if(!o||!SIGNUP)return;
-  const rows=S.players.filter(p=>p.status!=="Withdrawn").map(p=>({p,v:myVerify(p.name),sa:siteAvg(p.name)})).sort((a,b)=>((b.v&&b.v.status==="approved"?+b.v.tda:-1)-(a.v&&a.v.status==="approved"?+a.v.tda:-1))||a.p.name.localeCompare(b.p.name));
-  const ok=rows.filter(r=>r.v&&r.v.status==="approved").length;const c=document.createElement("div");c.className="card";
-  c.innerHTML=`<h2>Season ${SIGNUP}: hold table</h2><p class="note" style="margin-top:-4px">Everyone sends a DartCounter screenshot of their average. Admins check it (✅ approved, ⏳ waiting, ❌ send again). When an admin creates the league, approved players are split by average into 3 equal divisions. <b>${ok}</b> of ${rows.length} approved.</p>
-   <div class="tw"><table><tr><th>#</th><th class="l">Player</th><th>DartCounter avg</th><th>Site avg</th></tr>${rows.map((r,i)=>`<tr><td>${i+1}</td><td class="l">${pn(r.p.name)}</td><td>${vIcon(r.v)}</td><td>${r.sa?r.sa.toFixed(2):"–"}</td></tr>`).join("")}</table></div>`;
-  o.prepend(c)};
-
-// ---------- admin: open sign-up, check screenshots, create league ----------
-function renderSignupAdmin(){let c=$("s2Card");if(!ADMIN){if(c)c.remove();return}if(!c){c=document.createElement("div");c.className="card";c.id="s2Card";const ea=$("eaCard");ea?ea.after(c):$("adminPanels").prepend(c)}
-  const pend=S.verify.filter(v=>v.status==="pending"),appr=S.verify.filter(v=>v.status==="approved").sort((a,b)=>b.tda-a.tda||a.name.localeCompare(b.name));
-  const per=Math.ceil(appr.length/3)||1;const div=i=>Math.min(3,Math.floor(i/per)+1);
-  c.innerHTML=`<h2>🗂️ Season sign-up (hold table)</h2>${!SIGNUP?`<p class="note">Opens a sign-up for the next season. Players send a DartCounter screenshot of their average from <b>My matches</b>. The current season keeps running until you create the league.</p><button class="btn primary" id="s2Open">Open sign-up for the next season</button>`:
-   `<p class="note">Sign-up for <b>Season ${SIGNUP}</b> is open. ${pend.length} waiting, ${appr.length} approved.</p>
-   ${pend.length?pend.map(v=>`<div class="row" style="align-items:center;border:1px solid var(--line);border-radius:8px;padding:8px;margin:6px 0"><span style="flex:1 1 140px"><b>${esc(v.name)}</b> ${proofLinks(v.proofs)}<br><span class="note">Site avg ${siteAvg(v.name)?siteAvg(v.name).toFixed(2):"–"}</span></span>
-     <label class="f" style="flex:0 1 100px">Average<input type="number" step="0.01" id="s2v${v.id}" value="${(+v.tda).toFixed(2)}"></label><button class="btn primary" data-s2a="${v.id}">Approve</button><button class="btn" data-s2r="${v.id}">Reject</button></div>`).join(""):'<p class="note">Nothing waiting.</p>'}
-   <h3>Preview: 3 divisions by average</h3>${appr.length?`<div class="tw"><table><tr><th>Div</th><th class="l">Player</th><th>Avg</th></tr>${appr.map((v,i)=>`<tr><td>${div(i)}</td><td class="l">${esc(v.name)}</td><td>${(+v.tda).toFixed(2)}</td></tr>`).join("")}</table></div>`:'<p class="note">No approved players yet.</p>'}
-   <p class="note">Tip: start the new season under <b>Season settings</b> first, then create the league. Anyone not approved goes on hold.</p>
-   <div class="row"><button class="btn primary" id="s2Make" ${appr.length<3?"disabled":""}>Create league (${appr.length} players)</button><button class="btn" id="s2Close">Close sign-up</button></div>`}<p class="err" id="s2AErr"></p>`;
-  const err=t=>{$("s2AErr").textContent=t};
-  if($("s2Open"))$("s2Open").onclick=async()=>{const {error}=await db.rpc("lg_admin_signup",{p_pin:ADMIN,p_open:true});if(error)return err(error.message);await loadData();loadAdminLog()};
-  if($("s2Close"))$("s2Close").onclick=async()=>{const b=$("s2Close");if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="Tap again to close";return}const {error}=await db.rpc("lg_admin_signup",{p_pin:ADMIN,p_open:false});if(error)return err(error.message);await loadData();loadAdminLog()};
-  c.querySelectorAll("[data-s2a],[data-s2r]").forEach(b=>b.onclick=async()=>{const id=+(b.dataset.s2a||b.dataset.s2r),ok=!!b.dataset.s2a;const t=+$("s2v"+id).value;
-    const {error}=await db.rpc("lg_admin_verify",{p_pin:ADMIN,p_id:id,p_ok:ok,p_tda:t||null,p_note:ok?null:"Screenshot didn't show the average clearly"});if(error)return err(error.message);await loadData();loadAdminLog()});
-  if($("s2Make"))$("s2Make").onclick=async()=>{const b=$("s2Make");if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="Tap again: this moves everyone into new divisions";return}
-    const {data,error}=await db.rpc("lg_admin_create_league",{p_pin:ADMIN});if(error)return err(error.message);err("");$("s2AErr").innerHTML=`<span style="color:var(--ok)">League created: ${Object.entries(data||{}).map(([d,n])=>`Div ${d}: ${n}`).join(", ")}.</span>`;await loadData();loadAdminLog()}}
-const _renderAdminBitsS2=renderAdminBits;renderAdminBits=function(){_renderAdminBitsS2();renderSignupAdmin()};
-const _renderAllS2=renderAll;renderAll=function(){_renderAllS2();if(ADMIN)renderSignupAdmin()};
-setTimeout(()=>{loadData().catch(()=>{})},1200);
 
 })();
 </script>
